@@ -31,14 +31,14 @@ func main() {
 	for _, window := range dailyJoyWindows {
 		joyTimes = append(joyTimes, spreadTheJoy(rnd, window, numJoy, minJoyDistance)...)
 	}
-	if err := writeJoyTimesICalendar(os.Stdout, joyTimes, joyMessage, joyUUID); err != nil {
+	if err := writeJoyTimesICalendar(os.Stdout, joyTimes, joyMessage, minJoyDistance, joyUUID); err != nil {
 		if _, err2 := fmt.Fprintf(os.Stderr, "failed to write joy times: %s", err); err2 != nil {
 			panic(fmt.Sprintf("failed to write error %q to stderr: %s", err, err2))
 		}
 	}
 }
 
-func writeJoyTimesICalendar(w io.Writer, joyTimes []time.Time, joyMessage string, joyUUID string) error {
+func writeJoyTimesICalendar(w io.Writer, joyTimes []time.Time, joyMessage string, joyDuration time.Duration, joyUUID string) error {
 	now := time.Now()
 	if strings.Contains(joyMessage, "\r\n") {
 		return fmt.Errorf("don't be evil")
@@ -76,6 +76,10 @@ func writeJoyTimesICalendar(w io.Writer, joyTimes []time.Time, joyMessage string
 		if err != nil {
 			return err
 		}
+		_, err = fmt.Fprint(w, "DTEND:", encodeTime(joyTime.Add(joyDuration)), "\r\n")
+		if err != nil {
+			return err
+		}
 		_, err = fmt.Fprint(w, "SUMMARY:", joyMessage, "\r\n")
 		if err != nil {
 			return err
@@ -92,7 +96,7 @@ func writeJoyTimesICalendar(w io.Writer, joyTimes []time.Time, joyMessage string
 		if err != nil {
 			return err
 		}
-		_, err = fmt.Fprint(w, "TRIGGER:-PT0M\r\n")
+		_, err = fmt.Fprint(w, "TRIGGER:-PT1M\r\n")
 		if err != nil {
 			return err
 		}
